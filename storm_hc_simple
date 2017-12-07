@@ -1,0 +1,36 @@
+#!/bin/sh
+# Wrapper email script for storm_hc.sh
+## VARIABLES ##
+
+OUTPUTFILE=/tmp/hcserver.$$.out
+ERRFILE=/tmp/hc_err_file.tmp
+FS_FULL=`cat storm_hc_simple.sh |grep "FS_FULL_THRESHOLD=" |awk -F"=" {'print $2'}`
+MEM_USED=`cat storm_hc_simple.sh |grep "MEM_USED_THRESHOLD=" |awk -F"=" {'print $2'}`
+SWAP_USED=`cat storm_hc_simple.sh |grep "SWAP_USED_THRESHOLD=" |awk -F"=" {'print $2'}`
+CPU_LOAD=`cat storm_hc_simple.sh |grep "CPU_LOAD_THRESHOLD=" |awk -F"=" {'print $2'}`
+
+## MAIN ##
+touch ${ERRFILE}
+exec /usr/local/admin/bin/storm_hc_simple.sh |tee ${OUTPUTFILE}
+(
+echo "From: dlINFRASTUNIXSUPPORT@xcelenergy.com"
+# echo "To: dlINFRASTUNIXSUPPORT@xcelenergy.com; Bryan.Gorny@xcelenergy.com"
+echo "To: richard.walsh@xcelenergy.com"
+echo "MIME-Version: 1.0"
+echo "Subject: Health Check Output `date +%m-%d-%Y:%H:%M`"
+echo "Content-Type: text/html"
+echo "<FONT FACE='COURIER NEW' SIZE='5'><PRE>"
+echo "The "ERR!" results are based on the following criterea:"
+echo "FS = Filesystems => ${FS_FULL}% Full"
+echo "MEM = Memory utilization => ${MEM_USED}%"
+echo "SWAP = Swap utilization => ${SWAP_USED}%"
+echo "CPU = 5 minute load average/number of cores => ${CPU_LOAD}%"
+echo ""
+cat ${OUTPUTFILE}
+echo ""
+if [ -f ${ERRFILE} ]; then
+	cat ${ERRFILE}
+	rm -f ${ERRFILE}
+fi	
+echo "</PRE></FONT>" ) | sendmail -t
+rm -f ${OUTPUTFILE}

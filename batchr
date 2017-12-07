@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# Script to run a command against of list of servers
+#
+if [ $# != 0 ] ; then
+        echo "USAGE: ${0} | MUST BE RUN AS ROOT" 
+                exit 0 
+        fi 
+
+echo "Enter host file name: " 
+        read HOST_FILE 
+echo "Enter command you wish to run on the hosts: " 
+        read CMD
+
+for HOST in `cat ${HOST_FILE}`
+        do
+        # Check if the server is reachable first
+                ping -c 1 ${HOST} >/dev/null
+                if [ $? != 0 ] ; then
+                        echo "${HOST}: Unreachable"
+                        continue
+                fi
+        
+        # Run listed command and error if necessary
+        	echo "${HOST}:"
+		ssh -o BatchMode=yes -o ConnectTimeout=5 ${HOST} "${CMD}"
+		echo ""
+	done

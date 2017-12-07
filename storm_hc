@@ -1,0 +1,13 @@
+#!/bin/sh
+OUTPUTFILE=/tmp/hcserver.$$.out
+exec /usr/local/admin/bin/storm_hc.sh |tee ${OUTPUTFILE}
+(
+echo "From: dlINFRASTUNIXSUPPORT@xcelenergy.com"
+echo "To: dlINFRASTUNIXSUPPORT@xcelenergy.com; Bryan.Gorny@xcelenergy.com"
+echo "MIME-Version: 1.0"
+echo "Subject: Storm Mode - Health Check Output `date +%m-%d-%Y:%H:%M`"
+echo "Content-Type: text/html"
+echo "<FONT FACE='COURIER NEW' SIZE='5'><PRE>"
+cat ${OUTPUTFILE}
+echo "</PRE></FONT>" ) | sendmail -t
+rm -f ${OUTPUTFILE}

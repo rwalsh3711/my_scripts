@@ -1,0 +1,25 @@
+#!/bin/sh
+OUTPUTFILE=/tmp/hcserver.$$.out
+ERRFILE=/tmp/hc_err_file.tmp
+exec /home/s226448/bin/new_hc.sh |tee ${OUTPUTFILE}
+(
+echo "From: dlINFRASTUNIXSUPPORT@xcelenergy.com"
+echo "To: richard.walsh@xcelenergy.com"
+echo "MIME-Version: 1.0"
+echo "Subject: Health Check Output `date +%m-%d-%Y:%H:%M`"
+echo "Content-Type: text/html"
+echo "<FONT FACE='COURIER NEW' SIZE='5'><PRE>"
+echo "The ERR! results are based on the following criterea:"
+echo "FS = Filesystems => 85% Full"
+echo "MEM = Memory utilization => 95%"
+echo "SWAP = Swap utilization => 80%"
+echo "CPU = 5 minute load average/number of cores => 90%"
+echo ""
+cat ${OUTPUTFILE}
+echo ""
+if [ -f ${ERRFILE} ]; then
+	cat ${ERRFILE}
+	rm -f ${ERRFILE}
+fi
+echo "</PRE></FONT>" ) | sendmail -t
+rm -f ${OUTPUTFILE}

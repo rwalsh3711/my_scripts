@@ -1,0 +1,13 @@
+#!/bin/sh
+OUTPUTFILE=/tmp/hcserver.$$.out
+exec /home/s226448/bin/my_hc.sh |tee ${OUTPUTFILE}
+(
+echo "From: richard_walsh@optum.com"
+echo "To: richard_walsh@optum.com"
+echo "MIME-Version: 1.0"
+echo "Subject: Health Check Output `date +%m-%d-%Y:%H:%M`"
+echo "Content-Type: text/html"
+echo "<FONT FACE='COURIER NEW' SIZE='5'><PRE>"
+cat ${OUTPUTFILE}
+echo "</PRE></FONT>" ) | sendmail -t
+rm -f ${OUTPUTFILE}
