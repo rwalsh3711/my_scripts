@@ -23,7 +23,7 @@ while getopts d:h name; do
 done
 
 if [ ! -z "$flag1" ]; then
-	while IFS= read -r line; do printf '[%s] %s\n' "$(date '+%m-%d-%y %H:%M:%S')" "$line"| tee -a "$fval"; done
+	while IFS= read -r line; do echo -e  "[$(date '+%m-%d-%y %H:%M:%S')]" "$line"| tee -a "$fval"; done
 else
-	while IFS= read -r line; do printf "$line\n";printf '[%s] %s\n' "$(date '+%m-%d-%y %H:%M:%S')" "$line" >> $1; done
+	while IFS= read -r line; do echo -e "$line"; echo -e "[$(date '+%m-%d-%y %H:%M:%S')]" "$line" >> $1; done
 fi
