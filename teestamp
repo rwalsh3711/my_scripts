@@ -1,0 +1,29 @@
+#!/usr/bin/bash
+#
+# Script to tee output to file with timestamp
+#
+# Author: Rick Walsh
+# Date: 12/11/2017
+#
+
+if [ -z "$1" ]; then
+	echo -e "USAGE: "$0" -h | {-d} <file name>\n -d Print timestamp on terminal output\n -h Print this help message"
+	exit 1
+fi
+
+flag1=
+
+while getopts d:h name; do
+	case $name in
+	d)	flag1=1; 
+		fval=${OPTARG};;
+	h)	echo -e "USAGE: "$0" -h | {-d} <file name>\n -d Print timestamp on terminal output\n -h Print this help message"
+		exit ;;
+	esac
+done
+
+if [ ! -z "$flag1" ]; then
+	while IFS= read -r line; do printf '[%s] %s\n' "$(date '+%m-%d-%y %H:%M:%S')" "$line"| tee -a "$fval"; done
+else
+	while IFS= read -r line; do printf "$line\n";printf '[%s] %s\n' "$(date '+%m-%d-%y %H:%M:%S')" "$line" >> $1; done
+fi
