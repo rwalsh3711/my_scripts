@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/bash
 #
 # Health Check Script for Me!!
 # Author - Rick Walsh
@@ -39,9 +39,9 @@ echo -e "\t\t- FILESYSTEMS OVER ${THRESHOLD}% FULL -"
 EXCLUDE="/proc|/aha|Filesystem"
 
 	if [ "${OS}" == "AIX" ]; then
-		ssh ${HOST} "df -g" |egrep -v "${EXCLUDE}" |awk {'print $4"\t"$7'} > ${TMPFILE}
+		ssh -q ${HOST} "df -g" |egrep -v "${EXCLUDE}" |awk {'print $4"\t"$7'} > ${TMPFILE}
 	elif [ "${OS}" == "Linux" ]; then
-		ssh ${HOST} "df -hP" |egrep -v "${EXCLUDE}" |awk {'print $5"\t"$6'} > ${TMPFILE}
+		ssh -q ${HOST} "df -hP" |egrep -v "${EXCLUDE}" |awk {'print $5"\t"$6'} > ${TMPFILE}
 	else
 		echo -e "Unknown OS"
 		continue
@@ -63,13 +63,13 @@ _chk_mem()
 {
 echo -e "\t\t- MEMORY STATUS -"
 	if [[ $OS == "Linux" ]]; then
-		ssh ${HOST} "free -m" > ${TMPFILE}
+		ssh -q ${HOST} "free -m" > ${TMPFILE}
 		MEM_TOTAL=`cat ${TMPFILE} |head -2 |tail -1 |awk {'print $2'}`
 		MEM_CACHE=`cat ${TMPFILE} |head -3 |tail -1 |awk {'print $3'}`
 		SWAP_TOTAL=`cat ${TMPFILE} |tail -1 |awk {'print $2'}`
 		SWAP_USED=`cat ${TMPFILE} |tail -1 |awk {'print $3'}`
 	elif [[ $OS == "AIX" ]]; then
-		ssh ${HOST} "svmon -G -O unit=MB" > ${TMPFILE}
+		ssh -q ${HOST} "svmon -G -O unit=MB" > ${TMPFILE}
 		MEM_TOTAL=`cat ${TMPFILE} |head -4 |tail -1 |awk {'print $2'}`
 		MEM_CACHE=`cat ${TMPFILE} | head -4|tail -1| awk {'print $6'}`
 		SWAP_TOTAL=`cat ${TMPFILE} | head -5|tail -1| awk {'print $3'}`
@@ -90,7 +90,7 @@ rm -f ${TMPFILE}
 # Function to check system CPU
 _chk_cpu() {
 echo -e "\t\t- CPU STATUS (AVERAGE OVER 3 SECONDS) -" 
-ssh ${HOST} "sar 1 3" |egrep "idle|Average"
+ssh -q ${HOST} "sar 1 3" |egrep "idle|Average"
 echo -e ""
 }
 
@@ -98,9 +98,9 @@ echo -e ""
 _chk_err() {
 echo -e "\t\t- RECENT SYSTEM ERRORS -"
         if [ "${OS}" == "AIX" ]; then
-                ssh ${HOST} "errpt -T"PEND,PERM"" |tail -n5
+                ssh -q ${HOST} "errpt -T"PEND,PERM"" |tail -n5
         elif [ "${OS}" == "Linux" ]; then
-                ssh ${HOST} "cat /var/log/messages" |grep -i error|cut -c 1-100 |tail -n5
+                ssh -q ${HOST} "cat /var/log/messages" |grep -i error|cut -c 1-100 |tail -n5
         else
                 echo -e "Unknown OS"
                 continue
@@ -130,7 +130,7 @@ echo -e "############"
 
 	# Check if root user can log into host
 	echo -e "\t\t- SSH RESULTS -"
-	ssh -o BatchMode=yes -o ConnectTimeout=5 ${HOST} "echo -e ok" >/dev/null 2>&1
+	ssh -q -o BatchMode=yes -o ConnectTimeout=5 ${HOST} "echo -e ok" >/dev/null 2>&1
 		if [ $? != 0 ] ; then
 		echo -e "SSH Keys Not Installed"
 		continue
@@ -140,7 +140,7 @@ echo -e "############"
 		fi
 
 	# Collect the OS Level
-	OS=`ssh ${HOST} "uname -s"`
+	OS=`ssh -q ${HOST} "uname -s"`
 	if [ $OS != AIX ] && [ $OS != Linux ]; then
                 echo -e "${HOST} is running ${OS}.  I refuse to work with ${OS}.  Please go pound sand."
                 continue

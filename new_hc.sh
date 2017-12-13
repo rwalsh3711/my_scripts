@@ -48,9 +48,9 @@ _chk_fs() {
 	EXCLUDE="/proc|/aha|/home|/boot|Filesystem"
 
         if [ "${OS}" == "AIX" ]; then
-                ssh ${HOST} "df -g" |egrep -v "${EXCLUDE}" |awk {'print $4"\t"$7'} > ${TMPFILE}
+                ssh -q ${HOST} "df -g" |egrep -v "${EXCLUDE}" |awk {'print $4"\t"$7'} > ${TMPFILE}
         elif [ "${OS}" == "Linux" ]; then
-                ssh ${HOST} "df -hP" |egrep -v "${EXCLUDE}" |awk {'print $5"\t"$6'} > ${TMPFILE}
+                ssh -q ${HOST} "df -hP" |egrep -v "${EXCLUDE}" |awk {'print $5"\t"$6'} > ${TMPFILE}
         else
                 continue
         fi
@@ -79,13 +79,13 @@ _chk_fs() {
 # Function to check system memory
 _chk_mem() {
         if [[ ${OS} == "Linux" ]]; then
-                ssh ${HOST} "free -m" > ${TMPFILE}
+                ssh -q ${HOST} "free -m" > ${TMPFILE}
                 MEM_TOTAL=`cat ${TMPFILE} |head -2 |tail -1 |awk {'print $2'}`
                 MEM_CACHE=`cat ${TMPFILE} |head -3 |tail -1 |awk {'print $3'}`
                 SWAP_TOTAL=`cat ${TMPFILE} |tail -1 |awk {'print $2'}`
                 SWAP_USED=`cat ${TMPFILE} |tail -1 |awk {'print $3'}`
         elif [[ ${OS} == "AIX" ]]; then
-                ssh ${HOST} "svmon -G -O unit=MB" > ${TMPFILE}
+                ssh -q ${HOST} "svmon -G -O unit=MB" > ${TMPFILE}
                 MEM_TOTAL=`cat ${TMPFILE} |head -4 |tail -1 |awk {'print $2'}`
                 MEM_CACHE=`cat ${TMPFILE} | head -4|tail -1| awk {'print $6'}`
                 SWAP_TOTAL=`cat ${TMPFILE} | head -5|tail -1| awk {'print $3'}`
@@ -118,16 +118,16 @@ _chk_mem() {
 # Function to check system load
 _chk_cpu() {
 	if [[ ${OS} == "Linux" ]]; then
-		ssh ${HOST} "getconf _NPROCESSORS_ONLN" > ${TMPFILE}
+		ssh -q ${HOST} "getconf _NPROCESSORS_ONLN" > ${TMPFILE}
 		PROC_NUM=`cat ${TMPFILE}`
         elif [[ ${OS} == "AIX" ]]; then
-		ssh ${HOST} "lparstat -i" > ${TMPFILE}
+		ssh -q ${HOST} "lparstat -i" > ${TMPFILE}
 		PROC_NUM=`cat ${TMPFILE} |grep ^Active\ Phys |awk -F": " {'print $2'}`
         else
                 continue
         fi
 	
-	ssh ${HOST} "uptime" > ${TMPFILE}
+	ssh -q ${HOST} "uptime" > ${TMPFILE}
 	LOAD_AVG=`cat ${TMPFILE} |awk '{print $(NF-1) }'|awk -F, {'print $1'}`
 	LOAD_TOT=`echo "scale=0; 100 * ${LOAD_AVG} / ${PROC_NUM}" |bc`
 	
@@ -146,10 +146,10 @@ _chk_err() {
 NOW_AIX=$(date "+%m%d....%y")
 NOW_LINUX=$(date "+%b.%e")
         if [ "${OS}" == "AIX" ]; then
-                ssh ${HOST} "errpt -T"PEND,PERM""|grep "${NOW_AIX}"|head -n5 >> ${ERRTMP}
+                ssh -q ${HOST} "errpt -T"PEND,PERM""|grep "${NOW_AIX}"|head -n5 >> ${ERRTMP}
 		echo "" >> ${ERRTMP}
         elif [ "${OS}" == "Linux" ]; then
-                ssh ${HOST} "cat /var/log/messages" |grep -i error|grep "${NOW_LINUX}"|cut -c 1-100 |tail -n5 >> ${ERRTMP}
+                ssh -q ${HOST} "cat /var/log/messages" |grep -i error|grep "${NOW_LINUX}"|cut -c 1-100 |tail -n5 >> ${ERRTMP}
 		echo "" >> ${ERRTMP}
         else
                 continue
@@ -173,7 +173,7 @@ NOW_LINUX=$(date "+%b.%e")
 			fi
 
 		# Check if root user can log into host
-		ssh -o BatchMode=yes -o ConnectTimeout=5 ${HOST} "echo ok" >/dev/null 2>&1
+		ssh -q -o BatchMode=yes -o ConnectTimeout=5 ${HOST} "echo ok" >/dev/null 2>&1
 			if [ $? = 0 ] ; then
 				SSH_STAT=`printf "OK!"`
 			else   
@@ -182,7 +182,7 @@ NOW_LINUX=$(date "+%b.%e")
 			fi
 
 		# Collect the OS Level
-		OS=`ssh ${HOST} "uname -s"`
+		OS=`ssh -q ${HOST} "uname -s"`
 			if [ ${OS} != AIX ] && [ ${OS} != Linux ]; then
 				continue
 			fi
