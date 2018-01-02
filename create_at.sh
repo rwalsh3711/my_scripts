@@ -51,7 +51,7 @@ clear
 clear
 for HOST in ${HOSTLIST}
 do
-AT_INSTALLED=`ssh ${HOST} 'which at >/dev/null 2>&1; echo $?'`
+AT_INSTALLED=`ssh -q ${HOST} 'which at >/dev/null 2>&1; echo $?'`
 if [ "$AT_INSTALLED" != 0 ]; then
 	echo "## AT is not installed on ${HOST}! ##"
 	echo ""
@@ -61,7 +61,7 @@ echo "Adding the following at job to ${HOST}"
 echo "${AT_JOB}"
 echo "Scheduled for ${TIME}"
 echo ""
-ssh -oConnectTimeout=10 ${HOST} at ${TIME} <<EOF
+ssh -q -oConnectTimeout=10 ${HOST} at ${TIME} <<EOF
 ${AT_JOB}
 EOF
 if [ $? = 0 ]; then
