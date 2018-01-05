@@ -19,11 +19,11 @@ clear
                 HOSTLIST=`cat ${ANSWER}`
 		if [ $? != 0 ]; then
 			echo "FILE NOT FOUND!!"
-			exit 0
+			exit 1 
 		fi
         else
                 echo "Invalid answer"
-                exit 0
+                exit 1
         fi
 
 # Enter in the "at" job details
@@ -40,7 +40,11 @@ clear
 
 	echo ""
 	echo "When would you like to schedule the job?"
+<<<<<<< HEAD
 	echo "Examples of valid time formats are \"now\", \"9:30 AM Tue\", \"1400 Wed\""
+=======
+	echo "Examples of valid time formats are "now", "9:30 AM Tue", "1400 Wed""
+>>>>>>> b39e43eace0eb5de208888d240d4f8a3eb421ca2
 	echo ""
 
 	read TIME
@@ -52,23 +56,24 @@ echo ""
 
 for HOST in ${HOSTLIST}
 do
-AT_INSTALLED=`ssh ${HOST} 'which at >/dev/null 2>&1; echo $?'`
+AT_INSTALLED=`ssh -q ${HOST} 'which at >/dev/null 2>&1; echo $?'`
 if [ "$AT_INSTALLED" != 0 ]; then
 	echo "## AT is not installed on ${HOST}! ##"
 	echo ""
-	continue
+	exit 1
 fi
 echo " ## Adding the following AT job to ${HOST} ##"
 echo "${AT_JOB}"
 echo "Scheduled for ${TIME}"
 echo ""
-ssh -oConnectTimeout=10 ${HOST} at ${TIME} <<EOF
+ssh -q -oConnectTimeout=10 ${HOST} at ${TIME} <<EOF
 ${AT_JOB}
 EOF
 if [ $? = 0 ]; then
 	echo "## AT Job Scheduled on ${HOST} ##"
 else
 	echo "## ERROR Scheduling AT Job!! ##"
+	exit 1
 fi
 echo ""
 done

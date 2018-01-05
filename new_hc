@@ -1,22 +1,21 @@
 #!/bin/sh
 OUTPUTFILE=/tmp/hcserver.$$.out
 ERRFILE=/tmp/hc_err_file.tmp
-exec /home/s226448/bin/new_hc.sh |tee ${OUTPUTFILE}
+exec /home/rwalsh10/my_scripts/new_hc.sh |tee ${OUTPUTFILE}
 (
-echo "From: dlINFRASTUNIXSUPPORT@xcelenergy.com"
-echo "To: richard.walsh@xcelenergy.com"
+echo "From: richard_walsh@optum.com"
+echo "To: richard_walsh@optum.com"
 echo "MIME-Version: 1.0"
 echo "Subject: Health Check Output `date +%m-%d-%Y:%H:%M`"
 echo "Content-Type: text/html"
-echo "<FONT FACE='COURIER NEW' SIZE='5'><PRE>"
-echo "The ERR! results are based on the following criterea:"
-echo "FS = Filesystems => 85% Full"
-echo "MEM = Memory utilization => 95%"
-echo "SWAP = Swap utilization => 80%"
-echo "CPU = 5 minute load average/number of cores => 90%"
-echo ""
+echo "<FONT FACE='COURIER NEW' SIZE='3'><PRE>"
+echo "The ERR! results are based on the following criterea:\n"
+echo "FS = Filesystems => 85% Full\n"
+echo "MEM = Memory utilization => 95%\n"
+echo "SWAP = Swap utilization => 80%\n"
+echo "CPU = 5 minute load average/number of cores => 90%\n\n"
 cat ${OUTPUTFILE}
-echo ""
+echo "\n"
 if [ -f ${ERRFILE} ]; then
 	cat ${ERRFILE}
 	rm -f ${ERRFILE}
