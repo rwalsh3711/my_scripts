@@ -1,0 +1,220 @@
+#!/bin/sh
+# Version 1.1 Aug 24 2016
+# 1.1 exit if /var/crash is currently mounted
+
+LOG="/tmp/kdumpcreate.log"
+ROOTVG="`df -hP /|tail -1|cut -f4 -d'/'|cut -f1 -d'-'`"
+
+echo "Begin at `date`" > $LOG
+
+_checkOS() {
+	OS="unsupported"
+	cat /etc/redhat-release |grep "release 6" >/dev/null
+	if [ $? -eq 0 ]
+	then
+		OS="6"
+	fi
+	cat /etc/redhat-release |grep "release 7" >/dev/null
+	if [ $? -eq 0 ]
+	then
+		OS="7"
+	fi
+
+	if [ "$OS" = "unsupported" ]
+	then
+		echo FAIL
+		echo "OS is not supported." >> $LOG
+		exit 1
+	fi
+	return "$OS"
+}
+
+
+_create_vol() {
+	if [ -h /var/crash ]
+	then
+		rm -f /var/crash
+		mkdir /var/crash
+	fi
+
+	if [ ! -d /var/crash ]
+	then
+		mkdir /var/crash
+	fi
+
+#	df -hP /var/crash|tail -1|awk '{print $1}'|egrep 'root$|lv_var$' >/dev/null 2>/dev/null
+	df -hP /var/crash|tail -1|awk '{print $6}'|grep '^/var/crash$' > /dev/null 2>/dev/null
+
+	if [ $? -ne 0 ]
+	then
+		dmidecode -t 1|grep VMware >/dev/null 2>&1
+		if [ $? -eq 0 ]
+		then
+			DUMPSIZE=3
+		else
+			DUMPSIZE=10
+		fi
+
+		lvcreate -n lv_var_crash -L ${DUMPSIZE}g $ROOTVG >> $LOG 2>>$LOG
+		if [ $? -ne 0 ]
+		then
+			echo FAIL
+			echo ">>> Logical volume creation failed" >>$LOG
+			exit 1
+		fi
+
+		_checkOS
+		if [ $OS = "6" ]
+		then
+			mkfs.ext4 /dev/mapper/${ROOTVG}-lv_var_crash >> $LOG 2>>$LOG
+			if [ $? -ne 0 ]
+			then
+				echo FAIL
+				echo ">>> Filesystem creation failed" >>$LOG
+				exit 1
+			fi
+			echo "/dev/mapper/${ROOTVG}-lv_var_crash /var/crash   ext4  defaults  1 2" >> /etc/fstab
+		else
+			mkfs.xfs /dev/mapper/${ROOTVG}-lv_var_crash >> $LOG 2>>$LOG
+			if [ $? -ne 0 ]
+			then
+				echo FAIL
+				echo ">>> Filesystem creation failed" >>$LOG
+				exit 1
+			fi
+			echo "/dev/mapper/${ROOTVG}-lv_var_crash /var/crash   xfs  defaults  1 2" >> /etc/fstab
+		fi
+
+		mount /var/crash
+		if [ $? -ne 0 ]
+		then
+			echo FAIL
+			echo ">>> Filesystem mount failed." >>$LOG
+			exit 1
+		fi
+	else
+		echo ">>> /var/crash already appears to be seperate filesystem." >> $LOG
+		exit 1
+	fi
+}
+
+
+_kernel_params() {
+
+	_checkOS
+	if [ "$OS" = "6" ]
+	then
+		cp /etc/sysctl.conf /etc/sysctl.conf.original
+		cat /etc/sysctl.conf| grep -v '^kernel.sysrq'|grep -v '^kernel.panic'|grep -v '^kernel.unknown_nmi_panic' |grep -v '^kernel.hung_task_panic'|grep -v 'Controls the System Request debugging' > /tmp/sysctl.tmp
+		echo '# Controls the System Request debugging functionality of the kernel' >> /tmp/sysctl.tmp
+		echo 'kernel.sysrq = 1' >> /tmp/sysctl.tmp
+		echo 'kernel.unknown_nmi_panic = 1' >> /tmp/sysctl.tmp
+		cat /tmp/sysctl.tmp > /etc/sysctl.conf
+		rm -f /tmp/sysctl.tmp
+		sysctl -p >/dev/null 2>>$LOG
+	else
+		echo 'kernel.sysrq = 1' > /etc/sysctl.d/90-kdump.conf
+		echo 'kernel.unknown_nmi_panic = 1' >> /etc/sysctl.d/90-kdump.conf
+		sysctl -p /etc/sysctl.d/90-kdump.conf >/dev/null 2>>$LOG
+
+	fi
+
+}
+
+
+_kdump_config() {
+
+	_checkOS
+
+	if [ "$OS" = "6" ]
+	then
+	###########  Create RHEL 6 msh script to clean /var/crash
+		MSH="/etc/adm/clean_var_crash.msh"
+		echo '#!/bin/msh' > $MSH
+		echo '# This script is for Redhat 6 provided by Redhat support CASE 01638475' >> $MSH
+		echo 'echo "### Running kdump_pre ###"' >> $MSH
+		echo 'echo "mounting /var/crash"' >> $MSH
+		echo 'eval `grep '^DUMPDEV' /init`' >> $MSH
+		echo 'IS_LABEL=`echo $DUMPDEV | grep LABEL`' >> $MSH
+		echo 'echo $IS_LABEL' >> $MSH
+		echo 'IS_UUID=`echo $DUMPDEV | grep UUID`' >> $MSH
+		echo 'echo $IS_UUID' >> $MSH
+		echo 'if [ -n "$IS_LABEL" -o -n "$IS_UUID" ]' >> $MSH
+		echo 'then' >> $MSH
+		echo '  DUMPDEV=`findfs "$DUMPDEV"`' >> $MSH
+		echo 'fi' >> $MSH
+		echo 'fsck.ext4 -p $DUMPDEV' >> $MSH
+		echo 'mount -t ext4 $DUMPDEV /mnt' >> $MSH
+		echo 'echo "-> Cleaning /var/crash Filesystem"' >> $MSH
+		echo '    rm -rf /mnt/*' >> $MSH
+		echo 'umount /mnt' >> $MSH
+		echo 'echo "### done kdump_pre ###"' >> $MSH
+		echo 'exit $?' >> $MSH
+		chmod 755 $MSH
+	else
+	###########  Create RHEL 7 sh script to clean /var/crash
+		SH="/etc/adm/clean_var_crash.sh"
+		echo '#!/bin/sh' > $SH
+		echo '#' >> $SH
+		echo '# This script work for Redhat 7 provided by Redhat support CASE 01638475' >> $SH
+		echo 'echo "### Running kdump_pre ###"' >> $SH
+		echo '# If /var/crash is its own filesystem, it will be mounted' >> $SH
+		echo '# as /kdumproot/var/crash.' >> $SH
+		echo '# If /var/crash is on /, it will be mounted read only on /sysroot.' >> $SH
+		echo '#echo "remounting /var/crash"' >> $SH
+		echo '#    mount -o remount,rw /sysroot' >> $SH
+		echo 'echo "-> Cleaning /var/crash Filesystem"' >> $SH
+		echo 'rm -rf /kdumproot/var/crash/*' >> $SH
+		echo 'echo "### done kdump_pre ###"' >> $SH
+		echo 'exit $?' >> $SH
+		chmod 755 $SH
+	fi
+	mv /etc/kdump.conf /etc/kdump.conf.original
+	echo 'path /var/crash' > /etc/kdump.conf
+	if [ "$OS" = "6" ]
+	then
+		echo 'kdump_pre /etc/adm/clean_var_crash.msh' >> /etc/kdump.conf
+	else
+		echo 'kdump_pre /etc/adm/clean_var_crash.sh' >> /etc/kdump.conf
+	fi
+	echo 'core_collector makedumpfile -c --message-level 1 -d 31' >> /etc/kdump.conf
+	echo 'default reboot' >> /etc/kdump.conf
+	
+	if [ "$OS" = "6" ]
+	then
+		chkconfig kdump on
+		service kdump restart >> $LOG 2>>$LOG
+		if [ $? -eq 0 ]
+		then
+			echo "Success"
+			echo "Success" >>$LOG
+		else
+			echo "failed"
+			echo ">>> kdump startup failed." >>$LOG
+			exit 1
+		fi
+	else
+		systemctl enable kdump.service
+		systemctl restart kdump.service
+		if [ $? -eq 0 ]
+		then
+			echo "Success"
+			echo "Success" >>$LOG
+		else
+			echo "failed"
+			echo ">>> kdump startup failed." >>$LOG
+			exit 1
+		fi
+	fi
+
+}
+
+
+
+_checkOS
+_create_vol
+_kernel_params
+_kdump_config
+
+echo "Script Complete! Results located in "${LOG}""
+exit 0

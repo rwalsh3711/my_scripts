@@ -1,0 +1,31 @@
+#!/bin/sh
+
+test -n "$TMPDIR" || TMPDIR=/tmp
+tmpfilebase="$TMPDIR/rpmdb-compare.$$"
+
+if test $# -ne 2
+then
+	echo "Usage: $0 [user@]server1 [user@]server2" >&2
+	echo "Special name localhost means this server, without ssh" >&2
+	exit 1
+fi
+
+for i in "$@"
+do
+	tmpfile="$tmpfilebase.$i"
+	if test $i = localhost
+	then
+		rpm -qa | sort > $tmpfile
+	else
+		ssh $i "rpm -qa" | sort > $tmpfile
+	fi
+done
+
+echo "RPMs in $1 only:"
+comm -23 "$tmpfilebase.$1" "$tmpfilebase.$2"
+
+echo
+echo "RPMs in $2 only:"
+comm -13 "$tmpfilebase.$1" "$tmpfilebase.$2"
+
+rm -f "$tmpfilebase.$1" "$tmpfilebase.$2"

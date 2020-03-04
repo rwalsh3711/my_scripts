@@ -1,0 +1,40 @@
+#!/bin/ksh
+#
+# Script to check if a list of hosts
+# are reachable
+#
+#########################
+# Check variables exist #
+#########################
+
+if [[ $# != 1 ]]; then
+        echo "ERROR - Script usage: ${0} <host or hostlist file>"
+        exit
+fi
+
+#
+# Determine if input is host or file
+#
+echo "Are you specifying a host(H) or a file(F)? H|F"
+read TYPE
+case $TYPE in
+        H|h)
+                echo "Running command on $1 as host"
+                I=$1
+                ;;
+        F|f)
+                echo "Running command on $1 as file"
+                I=`cat $1`
+                ;;
+        *) echo "Invalid option. Exiting."
+                exit 1
+                ;;
+esac
+
+for HOST in $I
+do
+	echo $HOST: `ping -c 1 $HOST >/dev/null 2>&1; if [ $? = 0 ]
+        	then echo "Reachable"
+        	else echo "Not Reachable"
+        	fi`
+done

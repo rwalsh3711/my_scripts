@@ -23,6 +23,6 @@ for HOST in `cat ${HOST_FILE}`
         
         # Run listed command and error if necessary
         	echo "${HOST}:"
-		ssh -o BatchMode=yes -o ConnectTimeout=5 ${HOST} "${CMD}"
+		pbrun ssh -q -o BatchMode=yes -o ConnectTimeout=5 ${HOST} "${CMD}" 2>/dev/null
 		echo ""
 	done

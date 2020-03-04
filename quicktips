@@ -1,0 +1,253 @@
+# FIND - files older than 1 year
+find . -mtime +365 -exec ls -l {} \;
+
+# FIND - and remove files older than 1 year
+find . -mtime +365 -exec rm -f {} \;
+
+# VI - This command says "use the Unix sort command on lines 1 to the end of the file."
+:1,$!sort
+
+# VI - This command says "use the Unix uniq command to remove duplicate lines from line 
+\ 1 to the end of the file."  The uniq command only works on duplicate lines that are 
+\ adjacent to each other and do not have any blank lines between them.
+:1,$!uniq
+
+# VI - This command changes all text in a file from lower to upper case and vice versa
+:%s/.*/\L&/ - change to all lower case
+:%s/.*/\U&/ - change to all upper case
+
+# VI - Delete everything after and including the underscore:
+:%s/^\(.*\)_.*/\1/g
+
+# VI - Delete everything after and including the colon:
+:%s/^\(.*\):.*/\1/g
+
+# BOOTINFO - To display if the kernel is 32-bit enabled or 64-bit enabled, type:
+bootinfo -K 
+
+# BOOTINFO - To display if the hardware is 32-bit or 64-bit, type:
+bootinfo -y 
+
+# BOOTINFO - To display real memory in kilobytes (KB), type one of the following:
+bootinfo -r
+lsattr -El sys0 -a realmem  
+
+# LSCFG - How do I get a detailed configuration of my system?
+lscfg 
+-p Displays platform-specific device information. The flag is applicable to AIX 4.2.1 or later. 
+-v Displays the VPD (Vital Product Database) found in the customized VPD object class.
+For example, to display details about the tape drive, rmt0, type: 
+lscfg -vl rmt0
+
+# LSCFG - To display the number of processors on your system, type:
+lscfg | grep proc 
+
+# LSPV - To display the number of hard disks on your system, type:
+lspv 
+
+# LSPV - To find details about hdisk1, for example, run the following command: 
+lspv hdisk1		
+
+# UNAME - Different options (AIX)
+uname -p Displays the chip type of the system. For example, PowerPC. 
+uname -r Displays the release number of the operating system. 
+uname -s Displays the system name. For example, AIX. 
+uname -n Displays the name of the node.  
+uname -a Displays the system name, nodename, version, machine ID. 
+uname -M Displays the system model name. For example, IBM, 9114-275. 
+uname -v Displays the operating system version. 
+uname -m Displays the machine ID number of the hardware running the system. 
+uname -u Displays the system ID number.  
+
+# OSLEVEL - What version, release, and maintenance level of AIX is running on my system?
+oslevel -r 
+
+# OSLEVEL - How can I determine which fileset updates are missing from a particular AIX level?
+oslevel -rl 5300-04 
+
+# OSLEVEL - What SP (Service Pack) is installed on my system?
+oslevel -s			 
+
+# CRFS - How do I create a file system?
+/ The following command will create, within volume group testvg, a jfs file system of 10MB with mounting point /fs1:
+crfs -v jfs -g testvg -a size=10M -m /fs1 
+
+# CRFS - The following command will create, within volume group testvg, a jfs2 file system of 10MB 
+/ with mounting point /fs2 and having read only permissions:
+crfs -v jfs2 -g testvg -a size=10M -p ro -m /fs2	
+
+# CHFS - How do I change the size of a file system?
+/ To increase the /usr file system size by 1MB, type:
+chfs -a size=+1M /usr 
+/ Note: In AIX 5.3, the size of a JFS2 file system can be shrunk as well using "size=-1M"
+
+# MOUNT - How do I mount a CD?
+mount -V cdrfs -o ro /dev/cd0  /cdrom 
+
+# MOUNT - How do I mount a file system?
+/ The following command will mount file system /dev/fslv02 on the /test directory:
+mount /dev/fslv02 /test 
+
+# MOUNT - How do I mount all default file systems (all standard file systems in the /etc/filesystems 
+/ file marked by the mount=true attribute)?
+mount {-a|all}
+
+# MOUNT - How do I unmount a file system?
+/ Type the following command to unmount /test file system:
+umount /test
+
+# MOUNT - How do I display mounted file systems?
+/ Type the following command to display information about all currently mounted file systems:
+mount
+
+# RMFS - How do I remove a file system?
+Type the following command to remove the /test file system:
+rmfs /test
+
+# DEFRAGFS - How can I defragment a file system?
+/ The defragfs command can be used to improve or report the status of contiguous space within a file system. 
+/ For example, to defragment the file system /home, use the following command:
+defragfs /home
+
+# LSLPP - Which fileset contains a particular binary?
+/ To show bos.acct contains /usr/bin/vmstat, type:
+lslpp -w /usr/bin/vmstat 
+
+# LSLPP - How do I display information about installed filesets on my system?
+lslpp -l 			
+
+# INSTFIX - How do I determine if all filesets of maintenance levels are installed on my system?
+instfix -i | grep ML 
+
+# INSTFIX - How do I determine if a fix is installed on my system?
+/ To determine if IY24043 is installed, type:
+instfix -ik IY24043 
+
+# INSTFIX - How do I install an individual fix by APAR?
+/ To install APAR IY73748 from /dev/cd0, for example, enter the command:
+instfix -k IY73748 -d /dev/cd0			
+
+# LPPCHK - How do I verify if filesets have required prerequisites and are completely installed?
+/ To show which filesets need to be installed or corrected, type:
+lppchk -v 
+
+# DUMP - How do I get a dump of the header of the loader section and the symbol entries in symbolic representation?
+Type the following:
+dump -Htv 
+
+# LSPS - How do I determine the amount of paging space allocated and in use? 
+lsps -a 
+
+# CHPS - How do I increase a paging space?
+/ You can use the chps -s command to dynamically increase the size of a paging space. For example, 
+/ if you want to increase the size of hd6 with 3 logical partitions, you issue the following command:
+chps -s 3 hd6			
+
+# CHPS - How do I reduce a paging space?
+/ You can use the chps -d command to dynamically reduce the size of a paging space. For example, 
+/ if you want to decrease the size of hd6 with four logical partitions, you issue the following command:
+chps -d 4 hd6			
+
+# SMT - How do I enable or disable SMT?
+smtctl [ -m off | on [ -w boot | now]] 
+-m off - Sets SMT mode to disabled. 
+-m on - Sets SMT mode to enabled. 
+-w boot - Makes the SMT mode change effective on next and subsequent reboots if you run the bosboot 
+/ command before the next system reboot. 
+-w now - Makes the SMT mode change immediately but will not persist across reboot.  
+
+# LPARSTAT - How do I get partition-specific information and statistics?
+The lparstat command provides a report of partition information and utilization statistics. This command also provides a display of Hypervisor information.
+To get the default LPAR statistics, enter: 
+lparstat 1 1 
+To get default LPAR statistics with summary statistics on Hypervisor, enter: 
+lparstat .h 1 1
+To get the information about the partition, enter: 
+lparstat -i
+To get detailed Hypervisor statistics, enter: 
+lparstat .H 1 1
+
+# MKVG - How to create a volume group?
+mkvg -y name_of_volume_group -s partition_size list_of_hard_disks 
+
+# MKLV - How do I create a logical volume?
+mklv -y name_of_logical_volume name_of_volume_group number_of_partition 
+
+# EXTENDLV - How do I increase the size of a logical volume?
+/ To increase the size of the logical volume represented by the lv05 directory by three logical partitions, for example, type:
+extendlv lv05 3
+
+# LSVG - How do I display all logical volumes that are part of a volume group (for example, rootvg)?
+/ You can display all logical volumes that are part of rootvg by typing the following command:
+lsvg -l rootvg
+
+# LSVG - To show volume groups in the system, type:
+lsvg 
+
+# LSVG - To show all the characteristics of rootvg, type: 
+lsvg rootvg 
+
+# LSVG - To show disks used by rootvg, type: 
+lsvg -p rootvg 
+
+# LSLV - How do I list information about logical volumes?
+/ Run the following command to display information about the logical volume lv1:
+lslv lv1
+
+# RMLV - How do I remove a logical volume?
+You can remove the logical volume lv7 by running the following command:
+rmlv lv7
+
+# MKLVCOPY - How do I mirror a logical volume?
+mklvcopy LogicalVolumeName Numberofcopies
+syncvg VolumeGroupName
+
+# RMLVCOPY - How do I remove a copy of a logical volume?
+/ You can use the rmlvcopy command to remove copies of logical partitions of a logical volume. 
+/ To reduce the number of copies of each logical partition belonging to logical volume testlv, enter:
+rmlvcopy testlv 2
+
+# EXTENDVG - How to add a disk to a volume group?
+extendvg VolumeGroupName hdisk0 hdisk1 ... hdiskn 
+
+# SYNCVG - To synchronize the physical partitions located on physical volumes hdisk6 and hdisk7, use:
+syncvg -p hdisk4 hdisk5			
+
+# SYNCVG - To synchronize all physical partitions from volume group testvg, use:
+syncvg -v testvg	
+
+# DISK - How do I replace a disk?
+extendvg VolumeGroupName hdisk_new
+migratepv hdisk_bad hdisk_new
+reducevg -d VolumeGroupName hdisk_bad
+
+# CLONE - How can I clone (make a copy of ) the rootvg?
+/ You can run the alt_disk_copy command to copy the current rootvg to an alternate disk. 
+/ The following example shows how to clone the rootvg to hdisk1.
+alt_disk_copy -d hdisk1
+
+# IFCONFIG - How do I get the IP address of my system:
+ifconfig -a
+
+# IFCONFIG - To get information about one specific network interface, for example, tr0, run the command:
+ifconfig tr0
+
+# IFCONFIG - How do I activate a network interface?
+/ To activate the network interface tr0, run the command:
+ifconfig tr0 up
+
+# IFCONFIG - How do I deactivate a network interface?
+/ For example, to deactivate the network interface tr0, run the command:
+ifconfig tr0 down
+
+# LSDEV - How do I identify the network interfaces on my server?
+/ Either of the following two commands will display the network interfaces:
+lsdev -Cc if
+ifconfig -a
+
+# WTMP - How do I trim the wtmp file?
+/ Trims the last 20,000 lines of file
+/usr/sbin/acct/fwtmp < /var/adm/wtmp > /tmp/user1
+tail -20000 /tmp/user1 > /tmp/user2
+/usr/sbin/acct/fwtmp -ic < /tmp/user2 > /var/adm/wtmp
+rm /tmp/user1 /tmp/user2

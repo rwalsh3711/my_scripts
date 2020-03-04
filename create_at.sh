@@ -40,11 +40,7 @@ clear
 
 	echo ""
 	echo "When would you like to schedule the job?"
-<<<<<<< HEAD
-	echo "Examples of valid time formats are \"now\", \"9:30 AM Tue\", \"1400 Wed\""
-=======
 	echo "Examples of valid time formats are "now", "9:30 AM Tue", "1400 Wed""
->>>>>>> b39e43eace0eb5de208888d240d4f8a3eb421ca2
 	echo ""
 
 	read TIME
@@ -52,8 +48,7 @@ clear
 
 # Schedule the "at" job on the remote systems
 	
-echo ""
-
+clear
 for HOST in ${HOSTLIST}
 do
 AT_INSTALLED=`ssh -q ${HOST} 'which at >/dev/null 2>&1; echo $?'`
@@ -62,7 +57,7 @@ if [ "$AT_INSTALLED" != 0 ]; then
 	echo ""
 	exit 1
 fi
-echo " ## Adding the following AT job to ${HOST} ##"
+echo "Adding the following at job to ${HOST}"
 echo "${AT_JOB}"
 echo "Scheduled for ${TIME}"
 echo ""

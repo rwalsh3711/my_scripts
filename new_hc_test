@@ -1,0 +1,11 @@
+#!/bin/sh
+		echo "From: richard_walsh@optum.com"
+		echo "To: richard_walsh@optum.com"
+		echo "MIME-Version: 1.0"
+		echo "Subject: Test Output"
+		echo "Content-Type: text/html; charset=us-ascii"
+		echo "Content-Disposition: inline"
+		echo "<HTML>"
+		echo "<BODY>"
+		printf "%-20s %-10s %-10s %-10s %-10s %-10s %-10s\n" "test1" "test2" "test3" "test4" "test5" "test6" "test7"
+		echo "</BODY></HTML>" | sendmail -t

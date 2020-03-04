@@ -1,6 +1,6 @@
 #!/bin/sh
 OUTPUTFILE=/tmp/hcserver.$$.out
-exec ./my_hc.sh |tee ${OUTPUTFILE}
+exec /home/s226448/bin/my_hc.sh |tee ${OUTPUTFILE}
 (
 echo "From: richard_walsh@optum.com"
 echo "To: richard_walsh@optum.com"
